@@ -294,7 +294,7 @@ class BatteryApplet extends Applet.Applet {
 
         this._label.set_text(percentage + "%");
 
-        if (percentage < 8) {
+        if (percentage <= 8) {
             this._label.set_style("color: #f50000;");
         } else {
             this._label.set_style(null);

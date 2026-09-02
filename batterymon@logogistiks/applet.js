@@ -2,13 +2,13 @@ const Applet = imports.ui.applet;
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
-const Clutter = imports.gi.Clutter;
 const Util = imports.misc.util;
 
 const UPOWER_BUS = "org.freedesktop.UPower";
 const UPOWER_PATH = "/org/freedesktop/UPower";
 const UPOWER_IFACE = "org.freedesktop.UPower";
 const DEVICE_IFACE = "org.freedesktop.UPower.Device";
+const DEVICE_TYPE_BATTERY = 2;
 
 // UPower DeviceState enum
 const STATE_UNKNOWN = 0;
@@ -32,6 +32,7 @@ class BatteryApplet extends Applet.Applet {
         this._devices = [];
         this._deviceSignals = [];
         this._updateTimer = null;
+        this._batteryPaths = [];
 
         this._box = new St.BoxLayout({
             vertical: false,
@@ -152,10 +153,7 @@ class BatteryApplet extends Applet.Applet {
             if (type === null)
                 return;
 
-            // UPower DeviceType:
-            // 1 = line power
-            // 2 = battery
-            if (type.deep_unpack() !== 2)
+            if (type.deep_unpack() !== DEVICE_TYPE_BATTERY)
                 return;
 
             let signalId = proxy.connect(
@@ -294,30 +292,29 @@ class BatteryApplet extends Applet.Applet {
 
         this._label.set_text(percentage + "%");
 
-        if (percentage <= 8) {
-            this._label.set_style("color: #f50000;");
-        } else {
-            this._label.set_style(null);
-        }
+        this._label.set_style(
+            percentage <= 8 ? "color: #f50000;" : null
+        );
 
         let runtime = this._getRuntimeText(data);
 
-        if (runtime !== null) {
-            // Remove "Remaining: " / "Until full: " from the panel.
-            this._timeLabel.set_text(
-                runtime
-                    .replace("Remaining: ", "")
-                    .replace("Until full: ", "")
-            );
-        } else {
-            this._timeLabel.set_text("");
-        }
+        this._timeLabel.set_text(this._getPanelRuntimeText(runtime));
 
         let tooltip = this._buildTooltip(data);
 
         this.set_applet_tooltip(tooltip);
 
         this._icon.queue_repaint();
+    }
+
+
+    _getPanelRuntimeText(runtime) {
+        if (runtime === null)
+            return "";
+
+        return runtime
+            .replace("Remaining: ", "")
+            .replace("Until full: ", "");
     }
 
     /*
@@ -603,18 +600,17 @@ class BatteryApplet extends Applet.Applet {
             return;
         }
 
-        let command = "";
+        let commands = [];
 
         for (let path of this._batteryPaths) {
-            command += "echo '===== " + path + " ====='; ";
-            command += "upower -i " + path + "; ";
+            commands.push("echo '===== " + path + " ====='");
+            commands.push("upower -i " + path);
         }
 
-        command += "echo ''; ";
-        command += "read -p 'Press Enter to close...'";
+        commands.push("read -p 'Press Enter to close...'");
 
         Util.spawnCommandLine(
-            "gnome-terminal -- bash -c \"" + command + "\""
+            "gnome-terminal -- bash -c \"" + commands.join("; ") + "\""
         );
     }
 }

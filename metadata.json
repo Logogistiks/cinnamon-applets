@@ -1,0 +1,8 @@
+{
+    "uuid": "batterymon@logogistiks.de",
+    "name": "Logo's Battery Monitor",
+    "description": "A simple battery monitor alternative to the built in one",
+    "version": "1.0",
+    "author": "Logogistiks",
+    "max-instances": "1"
+}

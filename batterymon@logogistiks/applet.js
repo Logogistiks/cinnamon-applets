@@ -28,11 +28,11 @@ class BatteryApplet extends Applet.Applet {
     constructor(metadata, orientation, panelHeight, instanceId) {
         super(orientation, panelHeight, instanceId);
 
-        this._metadata = metadata;
         this._devices = [];
         this._deviceSignals = [];
         this._updateTimer = null;
         this._batteryPaths = [];
+        this._batteryData = null;
 
         this._box = new St.BoxLayout({
             vertical: false,
@@ -57,7 +57,7 @@ class BatteryApplet extends Applet.Applet {
         });
 
         this._label = new St.Label({
-            text: "--%"
+            text: "??%"
         });
 
         this._timeLabel = new St.Label({
@@ -286,6 +286,7 @@ class BatteryApplet extends Applet.Applet {
     _update() {
         let data = this._getBatteryData();
 
+        this._batteryData = data;
         this._batteryPaths = data.details.map(b => b.path);
 
         let percentage = Math.round(data.percentage);
@@ -476,7 +477,7 @@ class BatteryApplet extends Applet.Applet {
 
         cr.setOperator(2);
 
-        let data = this._getBatteryData();
+        let data = this._batteryData || this._getBatteryData();
         let percentage = Math.max(
             0,
             Math.min(1, data.percentage / 100)

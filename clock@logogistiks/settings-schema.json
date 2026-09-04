@@ -1,0 +1,24 @@
+{
+    "time-format": {
+        "type": "entry",
+        "default": "%H:%M:%S",
+        "description": "Top line format",
+        "tooltip": "strftime format used for the top line"
+    },
+    "date-format": {
+        "type": "entry",
+        "default": "%a, %d.%m.%Y",
+        "description": "Bottom line format",
+        "tooltip": "strftime format used for the bottom line"
+    },
+    "text-alignment": {
+        "type": "radiogroup",
+        "default": "Center",
+        "description": "Text alignment",
+        "options": {
+            "Left": "Left",
+            "Center": "Center",
+            "Right": "Right"
+        }
+    }
+}

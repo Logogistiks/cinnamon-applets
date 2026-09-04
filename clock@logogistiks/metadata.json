@@ -1,0 +1,8 @@
+{
+    "uuid": "clock@logogistiks",
+    "name": "Logo's Digital Clock",
+    "description": "A two-line digital clock and date applet",
+    "version": "1.0",
+    "author": "Logogistiks",
+    "max-instances": "1"
+}

@@ -1,0 +1,8 @@
+{
+    "uuid": "fanmon@logogistiks",
+    "name": "Logo's Fan Monitor",
+    "description": "A small fan speed monitor",
+    "version": "1.0",
+    "author": "Logogistiks",
+    "max-instances": "1"
+}

@@ -1,4 +1,5 @@
 const Applet = imports.ui.applet;
+const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
 const GLib = imports.gi.GLib;
 const Pango = imports.gi.Pango;
@@ -18,22 +19,27 @@ class ClockApplet extends Applet.Applet {
 
         this._box = new St.BoxLayout({
             vertical: true,
-            style_class: "my-clock-box"
+            style_class: "my-clock-box",
         });
 
         this._timeLabel = new St.Label({
             text: "--:--:--",
-            x_expand: true
         });
 
         this._dateLabel = new St.Label({
             text: "--, --.--.----",
-            x_expand: true
         });
 
         this._box.add_child(this._timeLabel);
         this._box.add_child(this._dateLabel);
         this.actor.add_child(this._box);
+
+        this._timeLabel.connect("notify::allocation", () => {
+            this._applyAlignment();
+        });
+        this._dateLabel.connect("notify::allocation", () => {
+            this._applyAlignment();
+        });
 
         this._settings = new Settings.AppletSettings(
             this,
@@ -43,20 +49,18 @@ class ClockApplet extends Applet.Applet {
         this._settings.bind(
             "time-format",
             "_timeFormat",
-            this._onSettingsChanged
+            this._update
         );
         this._settings.bind(
             "date-format",
             "_dateFormat",
-            this._onSettingsChanged
+            this._update
         );
         this._settings.bind(
             "text-alignment",
             "_textAlignment",
-            this._onSettingsChanged
+            this._applyAlignment
         );
-
-        this.set_applet_tooltip("Clock");
 
         this._update();
         this._applyAlignment();
@@ -65,21 +69,31 @@ class ClockApplet extends Applet.Applet {
 
 
     _applyAlignment() {
-        let alignment = Pango.Alignment.CENTER;
+        let alignment_pango, alignment_clutter, alignment_style;
 
-        if (this._textAlignment === "left")
-            alignment = Pango.Alignment.LEFT;
-        if (this._textAlignment === "right")
-            alignment = Pango.Alignment.RIGHT;
+        switch (this._textAlignment) {
+            case "left":
+                alignment_pango = Pango.Alignment.LEFT;
+                alignment_clutter = Clutter.ActorAlign.START;
+                alignment_style = "start";
+                break;
+            case "right":
+                alignment_pango = Pango.Alignment.RIGHT;
+                alignment_clutter = Clutter.ActorAlign.END;
+                alignment_style = "end";
+                break;
+            default:
+                alignment_pango = Pango.Alignment.CENTER;
+                alignment_clutter = Clutter.ActorAlign.CENTER;
+                alignment_style = "center";
+                break;
+        }
 
-        this._timeLabel.get_clutter_text().set_line_alignment(alignment);
-        this._dateLabel.get_clutter_text().set_line_alignment(alignment);
-    }
+        this._timeLabel.get_clutter_text().set_line_alignment(alignment_pango);
+        this._dateLabel.get_clutter_text().set_line_alignment(alignment_pango);
 
-
-    _onSettingsChanged() {
-        this._applyAlignment();
-        this._update();
+        this._timeLabel.get_clutter_text().set_x_align(alignment_clutter);
+        this._dateLabel.get_clutter_text().set_x_align(alignment_clutter);
     }
 
 
@@ -94,6 +108,8 @@ class ClockApplet extends Applet.Applet {
             this._timeLabel.set_text(now.format("%H:%M:%S"));
             this._dateLabel.set_text(now.format("%a, %d.%m.%Y"));
         }
+
+        this._applyAlignment();
     }
 
 

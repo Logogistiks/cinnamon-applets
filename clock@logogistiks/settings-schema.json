@@ -12,13 +12,13 @@
         "tooltip": "strftime format used for the bottom line"
     },
     "text-alignment": {
-        "type": "radiogroup",
-        "default": "Center",
+        "type": "combobox",
+        "default": "center",
         "description": "Text alignment",
         "options": {
-            "Left": "Left",
-            "Center": "Center",
-            "Right": "Right"
+            "left": "left",
+            "center": "center",
+            "right": "right"
         }
     }
 }

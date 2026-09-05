@@ -34,7 +34,7 @@ class FanApplet extends Applet.Applet {
         });
 
         this._speedLabel = new St.Label({
-            text: "--"
+            text: "??"
         });
 
         this._unitLabel = new St.Label({

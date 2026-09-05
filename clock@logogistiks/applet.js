@@ -42,23 +42,18 @@ class ClockApplet extends Applet.Applet {
         );
         this._settings.bind(
             "time-format",
-            "_timeFormat"
+            "_timeFormat",
+            this._onSettingsChanged
         );
         this._settings.bind(
             "date-format",
-            "_dateFormat"
+            "_dateFormat",
+            this._onSettingsChanged
         );
         this._settings.bind(
             "text-alignment",
-            "_textAlignment"
-        );
-        this._settings.connect(
-            "settings-changed",
-            this._onSettingsChanged.bind(this)
-        );
-        this._settings.connect(
-            "changed::text-alignment",
-            this._onAlignmentChanged.bind(this)
+            "_textAlignment",
+            this._onSettingsChanged
         );
 
         this.set_applet_tooltip("Clock");
@@ -69,30 +64,22 @@ class ClockApplet extends Applet.Applet {
     }
 
 
-    _applyAlignment(value) {
+    _applyAlignment() {
         let alignment = Pango.Alignment.CENTER;
-        let textAlignment = String(
-            value === undefined ? this._textAlignment : value
-        ).toLowerCase();
 
-        if (textAlignment === "left")
+        if (this._textAlignment === "left")
             alignment = Pango.Alignment.LEFT;
-        else if (textAlignment === "right")
+        if (this._textAlignment === "right")
             alignment = Pango.Alignment.RIGHT;
 
-        this._timeLabel.clutter_text.set_line_alignment(alignment);
-        this._dateLabel.clutter_text.set_line_alignment(alignment);
-    }
-
-
-    _onAlignmentChanged(settings, key, oldValue, newValue) {
-        this._applyAlignment(newValue);
+        this._timeLabel.get_clutter_text().set_line_alignment(alignment);
+        this._dateLabel.get_clutter_text().set_line_alignment(alignment);
     }
 
 
     _onSettingsChanged() {
-        this._update();
         this._applyAlignment();
+        this._update();
     }
 
 

@@ -1,9 +1,12 @@
 const Applet = imports.ui.applet;
+const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
+const Pango = imports.gi.Pango;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const ByteArray = imports.byteArray;
 const Util = imports.misc.util;
+const Settings = imports.ui.settings;
 
 const HWMON_PATH = "/sys/class/hwmon";
 const UPDATE_INTERVAL = 5;
@@ -48,10 +51,57 @@ class FanApplet extends Applet.Applet {
         this._box.add_child(this._textBox);
         this.actor.add_child(this._box);
 
+        this._settings = new Settings.AppletSettings(
+            this,
+            metadata.uuid,
+            instanceId
+        );
+        this._settings.bind(
+            "show-icon",
+            "_showIcon",
+            this._updateIconVisibility
+        );
+        this._settings.bind(
+            "label-alignment",
+            "_labelAlignment",
+            this._applyAlignment
+        );
+
         this.set_applet_tooltip("Fan speed");
 
         this._update();
         this._startTimer();
+    }
+
+
+    _applyAlignment() {
+        let alignment_pango, alignment_clutter;
+
+        switch (this._labelAlignment) {
+            case "left":
+                alignment_pango = Pango.Alignment.LEFT;
+                alignment_clutter = Clutter.ActorAlign.START;
+                break;
+            case "right":
+                alignment_pango = Pango.Alignment.RIGHT;
+                alignment_clutter = Clutter.ActorAlign.END;
+                break;
+            default:
+                alignment_pango = Pango.Alignment.CENTER;
+                alignment_clutter = Clutter.ActorAlign.CENTER;
+                break;
+        }
+
+        this._speedLabel.get_clutter_text().set_line_alignment(alignment_pango);
+        this._unitLabel.get_clutter_text().set_line_alignment(alignment_pango);
+
+        this._speedLabel.get_clutter_text().set_x_align(alignment_clutter);
+        this._unitLabel.get_clutter_text().set_x_align(alignment_clutter);
+    }
+
+
+    _updateIconVisibility() {
+        this._icon.visible = this._showIcon;
     }
 
 
@@ -119,7 +169,10 @@ class FanApplet extends Applet.Applet {
         this.set_applet_tooltip(
             this._rpm === null ? "Fan speed unavailable" : "Fan speed"
         );
-        this._icon.queue_repaint();
+        if (this._showIcon)
+            this._icon.queue_repaint();
+
+        this._applyAlignment();
     }
 
 

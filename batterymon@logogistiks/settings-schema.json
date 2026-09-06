@@ -1,0 +1,50 @@
+{
+    "section-general": {
+        "type": "section",
+        "description": "General"
+    },
+    "show-icon": {
+        "type": "switch",
+        "default": true,
+        "description": "Show icon",
+        "tooltip": "Show battery icon next to text"
+    },
+    "critical-threshold": {
+        "type": "spinbutton",
+        "default": 8,
+        "description": "Critical threshold percentage",
+        "tooltip": "Battery percentage below which the percentage number will turn red",
+        "min": 1,
+        "max": 100,
+        "step": 1
+    },
+    "section-format": {
+        "type": "section",
+        "description": "Format"
+    },
+    "remaining-format": {
+        "type": "entry",
+        "default": "%-Hh %-Mm",
+        "description": "Format for remaining time",
+        "tooltip": "strftime format used for the remaining time"
+    },
+    "format-info": {
+        "type": "button",
+        "description": "Click here for info about the strftime format",
+        "callback": "on_settings_infobutton"
+    },
+    "section-alignment": {
+        "type": "section",
+        "description": "Alignment"
+    },
+    "label-alignment": {
+        "type": "combobox",
+        "default": "center",
+        "description": "Text alignment",
+        "options": {
+            "left": "left",
+            "center": "center",
+            "right": "right"
+        }
+    }
+}

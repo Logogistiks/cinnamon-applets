@@ -2,6 +2,7 @@ const Applet = imports.ui.applet;
 const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
 const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
 const Pango = imports.gi.Pango;
 const Settings = imports.ui.settings;
 
@@ -13,33 +14,26 @@ class ClockApplet extends Applet.Applet {
         super(orientation, panelHeight, instanceId);
 
         this._updateTimer = null;
-        this._timeFormat = "%H:%M:%S";
-        this._dateFormat = "%a, %d.%m.%Y";
-        this._textAlignment = "center";
+        this._topFormat = "%H:%M:%S";
+        this._botFormat = "%a, %d.%m.%Y";
+        this._labelAlignment = "center";
 
         this._box = new St.BoxLayout({
             vertical: true,
             style_class: "my-clock-box",
         });
 
-        this._timeLabel = new St.Label({
+        this._topLabel = new St.Label({
             text: "--:--:--",
         });
 
-        this._dateLabel = new St.Label({
+        this._botLabel = new St.Label({
             text: "--, --.--.----",
         });
 
-        this._box.add_child(this._timeLabel);
-        this._box.add_child(this._dateLabel);
+        this._box.add_child(this._topLabel);
+        this._box.add_child(this._botLabel);
         this.actor.add_child(this._box);
-
-        this._timeLabel.connect("notify::allocation", () => {
-            this._applyAlignment();
-        });
-        this._dateLabel.connect("notify::allocation", () => {
-            this._applyAlignment();
-        });
 
         this._settings = new Settings.AppletSettings(
             this,
@@ -47,23 +41,22 @@ class ClockApplet extends Applet.Applet {
             instanceId
         );
         this._settings.bind(
-            "time-format",
-            "_timeFormat",
+            "top-format",
+            "_topFormat",
             this._update
         );
         this._settings.bind(
-            "date-format",
-            "_dateFormat",
+            "bot-format",
+            "_botFormat",
             this._update
         );
         this._settings.bind(
-            "text-alignment",
-            "_textAlignment",
+            "label-alignment",
+            "_labelAlignment",
             this._applyAlignment
         );
 
         this._update();
-        this._applyAlignment();
         this._startTimer();
     }
 
@@ -71,7 +64,7 @@ class ClockApplet extends Applet.Applet {
     _applyAlignment() {
         let alignment_pango, alignment_clutter;
 
-        switch (this._textAlignment) {
+        switch (this._labelAlignment) {
             case "left":
                 alignment_pango = Pango.Alignment.LEFT;
                 alignment_clutter = Clutter.ActorAlign.START;
@@ -86,11 +79,11 @@ class ClockApplet extends Applet.Applet {
                 break;
         }
 
-        this._timeLabel.get_clutter_text().set_line_alignment(alignment_pango);
-        this._dateLabel.get_clutter_text().set_line_alignment(alignment_pango);
+        this._topLabel.get_clutter_text().set_line_alignment(alignment_pango);
+        this._botLabel.get_clutter_text().set_line_alignment(alignment_pango);
 
-        this._timeLabel.get_clutter_text().set_x_align(alignment_clutter);
-        this._dateLabel.get_clutter_text().set_x_align(alignment_clutter);
+        this._topLabel.get_clutter_text().set_x_align(alignment_clutter);
+        this._botLabel.get_clutter_text().set_x_align(alignment_clutter);
     }
 
 
@@ -98,12 +91,12 @@ class ClockApplet extends Applet.Applet {
         let now = GLib.DateTime.new_now_local();
 
         try {
-            this._timeLabel.set_text(now.format(this._timeFormat));
-            this._dateLabel.set_text(now.format(this._dateFormat));
+            this._topLabel.set_text(now.format(this._topFormat));
+            this._botLabel.set_text(now.format(this._botFormat));
         } catch (e) {
             global.logError("Clock: Invalid date or time format: " + e);
-            this._timeLabel.set_text(now.format("%H:%M:%S"));
-            this._dateLabel.set_text(now.format("%a, %d.%m.%Y"));
+            this._topLabel.set_text(now.format("%H:%M:%S"));
+            this._botLabel.set_text(now.format("%a, %d.%m.%Y"));
         }
 
         this._applyAlignment();
@@ -129,6 +122,12 @@ class ClockApplet extends Applet.Applet {
         }
 
         this._settings.finalize();
+    }
+
+
+    on_settings_infobutton() {
+        let url = "https://docs.python.org/3.6/library/datetime.html#strftime-and-strptime-behavior";
+        Gio.AppInfo.launch_default_for_uri(url, null);
     }
 }
 

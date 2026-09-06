@@ -69,23 +69,20 @@ class ClockApplet extends Applet.Applet {
 
 
     _applyAlignment() {
-        let alignment_pango, alignment_clutter, alignment_style;
+        let alignment_pango, alignment_clutter;
 
         switch (this._textAlignment) {
             case "left":
                 alignment_pango = Pango.Alignment.LEFT;
                 alignment_clutter = Clutter.ActorAlign.START;
-                alignment_style = "start";
                 break;
             case "right":
                 alignment_pango = Pango.Alignment.RIGHT;
                 alignment_clutter = Clutter.ActorAlign.END;
-                alignment_style = "end";
                 break;
             default:
                 alignment_pango = Pango.Alignment.CENTER;
                 alignment_clutter = Clutter.ActorAlign.CENTER;
-                alignment_style = "center";
                 break;
         }
 

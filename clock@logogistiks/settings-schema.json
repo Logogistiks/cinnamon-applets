@@ -1,0 +1,37 @@
+{
+    "section-format": {
+        "type": "section",
+        "description": "Format"
+    },
+    "top-format": {
+        "type": "entry",
+        "default": "%H:%M:%S",
+        "description": "Top line",
+        "tooltip": "strftime format used for the top line"
+    },
+    "bot-format": {
+        "type": "entry",
+        "default": "%a, %d.%m.%Y",
+        "description": "Bottom line",
+        "tooltip": "strftime format used for the bottom line"
+    },
+    "format-info": {
+        "type": "button",
+        "description": "Click here for info about the strftime format",
+        "callback": "on_settings_infobutton"
+    },
+    "section-alignment": {
+        "type": "section",
+        "description": "Alignment"
+    },
+    "label-alignment": {
+        "type": "combobox",
+        "default": "center",
+        "description": "Text alignment",
+        "options": {
+            "left": "left",
+            "center": "center",
+            "right": "right"
+        }
+    }
+}

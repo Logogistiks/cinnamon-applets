@@ -1,8 +1,11 @@
 const Applet = imports.ui.applet;
+const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const Pango = imports.gi.Pango;
 const Util = imports.misc.util;
+const Settings = imports.ui.settings;
 
 const UPOWER_BUS = "org.freedesktop.UPower";
 const UPOWER_PATH = "/org/freedesktop/UPower";
@@ -28,11 +31,11 @@ class BatteryApplet extends Applet.Applet {
     constructor(metadata, orientation, panelHeight, instanceId) {
         super(orientation, panelHeight, instanceId);
 
-        this._metadata = metadata;
         this._devices = [];
         this._deviceSignals = [];
         this._updateTimer = null;
         this._batteryPaths = [];
+        this._batteryData = null;
 
         this._box = new St.BoxLayout({
             vertical: false,
@@ -57,7 +60,7 @@ class BatteryApplet extends Applet.Applet {
         });
 
         this._label = new St.Label({
-            text: "--%"
+            text: "??%"
         });
 
         this._timeLabel = new St.Label({
@@ -72,10 +75,61 @@ class BatteryApplet extends Applet.Applet {
 
         this.actor.add_child(this._box);
 
-        this.set_applet_tooltip("Battery");
+        this._settings = new Settings.AppletSettings(
+            this,
+            metadata.uuid,
+            instanceId
+        );
+        this._settings.bind(
+            "show-icon",
+            "_showIcon",
+            this._updateIconVisibility
+        );
+        this._settings.bind(
+            "critical-threshold",
+            "_critThreshold",
+            this._update
+        );
+        this._settings.bind(
+            "remaining-format",
+            "_remainingFormat",
+            this._update
+        );
+        this._settings.bind(
+            "label-alignment",
+            "_labelAlignment",
+            this._applyAlignment
+        );
 
         this._connectUPower();
+        this._update();
         this._startTimer();
+    }
+
+
+    _applyAlignment() {
+        let alignment_pango, alignment_clutter;
+
+        switch (this._labelAlignment) {
+            case "left":
+                alignment_pango = Pango.Alignment.LEFT;
+                alignment_clutter = Clutter.ActorAlign.START;
+                break;
+            case "right":
+                alignment_pango = Pango.Alignment.RIGHT;
+                alignment_clutter = Clutter.ActorAlign.END;
+                break;
+            default:
+                alignment_pango = Pango.Alignment.CENTER;
+                alignment_clutter = Clutter.ActorAlign.CENTER;
+                break;
+        }
+
+        this._label.get_clutter_text().set_line_alignment(alignment_pango);
+        this._timeLabel.get_clutter_text().set_line_alignment(alignment_pango);
+
+        this._label.get_clutter_text().set_x_align(alignment_clutter);
+        this._timeLabel.get_clutter_text().set_x_align(alignment_clutter);
     }
 
 
@@ -286,6 +340,7 @@ class BatteryApplet extends Applet.Applet {
     _update() {
         let data = this._getBatteryData();
 
+        this._batteryData = data;
         this._batteryPaths = data.details.map(b => b.path);
 
         let percentage = Math.round(data.percentage);
@@ -293,7 +348,7 @@ class BatteryApplet extends Applet.Applet {
         this._label.set_text(percentage + "%");
 
         this._label.set_style(
-            percentage <= 8 ? "color: #f50000;" : null
+            percentage <= this._critThreshold ? "color: #f50000;" : null
         );
 
         let runtime = this._getRuntimeText(data);
@@ -304,7 +359,15 @@ class BatteryApplet extends Applet.Applet {
 
         this.set_applet_tooltip(tooltip);
 
-        this._icon.queue_repaint();
+        if (this._showIcon)
+            this._icon.queue_repaint();
+
+        this._applyAlignment();
+    }
+
+
+    _updateIconVisibility() {
+        this._icon.visible = this._showIcon;
     }
 
 
@@ -376,10 +439,6 @@ class BatteryApplet extends Applet.Applet {
      * For discharge:
      *
      *   remaining time = energy / discharge power
-     *
-     * This reproduces UPower's result for your BAT0:
-     *
-     *   14.71 Wh / 6.687 W ~= 2.20 h
      */
     _getRuntimeText(data) {
         if (data.hasDischarging && data.dischargeRate > 0) {
@@ -412,25 +471,16 @@ class BatteryApplet extends Applet.Applet {
 
 
     /*
-     * Format hours into something similar to the Cinnamon battery applet.
+     * Format hours using the configured strftime format.
      */
     _formatDuration(hours) {
         if (!isFinite(hours) || hours < 0)
             return "unknown";
 
-        let totalMinutes = Math.round(hours * 60);
+        let seconds = Math.round(hours * 60 * 60);
+        let dateTime = GLib.DateTime.new_from_unix_utc(seconds);
 
-        let h = Math.floor(totalMinutes / 60);
-        let m = totalMinutes % 60;
-
-        if (h > 0) {
-            if (m === 0)
-                return h + "h";
-
-            return h + "h " + m + "m";
-        }
-
-        return m + "m";
+        return dateTime.format(this._remainingFormat);
     }
 
 
@@ -476,7 +526,7 @@ class BatteryApplet extends Applet.Applet {
 
         cr.setOperator(2);
 
-        let data = this._getBatteryData();
+        let data = this._batteryData || this._getBatteryData();
         let percentage = Math.max(
             0,
             Math.min(1, data.percentage / 100)
@@ -612,6 +662,12 @@ class BatteryApplet extends Applet.Applet {
         Util.spawnCommandLine(
             "gnome-terminal -- bash -c \"" + commands.join("; ") + "\""
         );
+    }
+
+
+    on_settings_infobutton() {
+        let url = "https://docs.python.org/3.6/library/datetime.html#strftime-and-strptime-behavior";
+        Gio.AppInfo.launch_default_for_uri(url, null);
     }
 }
 

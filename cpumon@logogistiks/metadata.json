@@ -1,0 +1,8 @@
+{
+    "uuid": "cpumon@logogistiks",
+    "name": "Logo's CPU Monitor",
+    "description": "A small CPU usage and temperature monitor",
+    "version": "1.0",
+    "author": "Logogistiks",
+    "max-instances": "1"
+}

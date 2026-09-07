@@ -33,7 +33,7 @@ class FanApplet extends Applet.Applet {
 
         this._textBox = new St.BoxLayout({
             vertical: true,
-            style: "padding-left: 3px;"
+            style: "padding-left: 0px;"
         });
 
         this._speedLabel = new St.Label({
@@ -67,7 +67,9 @@ class FanApplet extends Applet.Applet {
             this._applyAlignment
         );
 
-        this.set_applet_tooltip("Fan speed");
+        this.set_applet_tooltip(
+            this._fanPath === null ? "Fan path unavailable" : this._fanPath
+        );
 
         this._update();
         this._startTimer();
@@ -167,7 +169,7 @@ class FanApplet extends Applet.Applet {
             this._rpm === null ? "??" : this._rpm.toString()
         );
         this.set_applet_tooltip(
-            this._rpm === null ? "Fan speed unavailable" : "Fan speed"
+            this._fanPath === null ? "Fan path unavailable" : this._fanPath
         );
         if (this._showIcon)
             this._icon.queue_repaint();
@@ -180,9 +182,9 @@ class FanApplet extends Applet.Applet {
         let cr = area.get_context();
         let width = area.width;
         let height = area.height;
-        let centerX = width / 2;
+        let centerX = width * 0.4;
         let centerY = height / 2;
-        let radius = Math.min(width, height) * 0.42;
+        let radius = Math.min(width, height) / 2;
 
         cr.setOperator(0);
         cr.paint();

@@ -1,0 +1,26 @@
+{
+    "section-general": {
+        "type": "section",
+        "description": "General"
+    },
+    "show-icon": {
+        "type": "switch",
+        "default": true,
+        "description": "Show icon",
+        "tooltip": "Show RAM icon next to text"
+    },
+    "section-alignment": {
+        "type": "section",
+        "description": "Alignment"
+    },
+    "label-alignment": {
+        "type": "combobox",
+        "default": "center",
+        "description": "Text alignment",
+        "options": {
+            "left": "left",
+            "center": "center",
+            "right": "right"
+        }
+    }
+}

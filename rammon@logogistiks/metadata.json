@@ -1,0 +1,8 @@
+{
+    "uuid": "rammon@logogistiks",
+    "name": "Logo's RAM Monitor",
+    "description": "A small RAM usage monitor",
+    "version": "1.0",
+    "author": "Logogistiks",
+    "max-instances": "1"
+}

@@ -2,6 +2,7 @@
     "uuid": "clock@logogistiks",
     "name": "Logo's Digital Clock",
     "description": "A two-line digital clock and date applet",
+    "icon": "clock",
     "version": "1.0",
     "author": "Logogistiks",
     "max-instances": "1"

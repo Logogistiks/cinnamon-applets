@@ -1,57 +1,34 @@
-const Applet = imports.ui.applet;
-const Clutter = imports.gi.Clutter;
-const St = imports.gi.St;
-const Pango = imports.gi.Pango;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const ByteArray = imports.byteArray;
 const Settings = imports.ui.settings;
+
+const Base = imports.applets["cpumon@logogistiks"].shared.appletBase;
 
 const PROC_STAT_PATH = "/proc/stat";
 const HWMON_PATH = "/sys/class/hwmon";
 const UPDATE_INTERVAL = 5;
 
 
-class CpuApplet extends Applet.Applet {
+class CpuApplet extends Base.IconTwoLineApplet {
     constructor(metadata, orientation, panelHeight, instanceId) {
-        super(orientation, panelHeight, instanceId);
+        super(metadata, orientation, panelHeight, instanceId, {
+            widthFactor: 0.58,
+            minWidth: 20,
+            minHeight: 20,
+            heightPadding: 6
+        });
 
-        this._updateTimer = null;
+        this._textBox.set_style("padding-left: 3px;");
+        this._topLabel.set_text("??%");
+        this._botLabel.set_text("??°C");
+
         this._previousCpuTimes = null;
         this._temperaturePath = this._findTemperaturePath();
         this._usage = null;
         this._temperature = null;
-
-        this._box = new St.BoxLayout({
-            vertical: false,
-            style_class: "my-cpu-box"
-        });
-
-        this._icon = new St.DrawingArea({
-            width: Math.max(20, Math.floor(panelHeight * 0.58)),
-            height: Math.max(20, panelHeight - 6)
-        });
-        this._icon.connect("repaint", this._drawCpu.bind(this));
-
-        this._textBox = new St.BoxLayout({
-            vertical: true,
-            style: "padding-left: 3px;"
-        });
-
-        this._usageLabel = new St.Label({
-            text: "??%"
-        });
-
-        this._temperatureLabel = new St.Label({
-            text: "??°C"
-        });
-
-        this._textBox.add_child(this._usageLabel);
-        this._textBox.add_child(this._temperatureLabel);
-
-        this._box.add_child(this._icon);
-        this._box.add_child(this._textBox);
-        this.actor.add_child(this._box);
+        this._usageLabel = this._topLabel;
+        this._temperatureLabel = this._botLabel;
 
         this._settings = new Settings.AppletSettings(
             this,
@@ -77,38 +54,7 @@ class CpuApplet extends Applet.Applet {
         this.set_applet_tooltip("CPU usage and temperature");
 
         this._update();
-        this._startTimer();
-    }
-
-
-    _applyAlignment() {
-        let alignment_pango, alignment_clutter;
-
-        switch (this._labelAlignment) {
-            case "left":
-                alignment_pango = Pango.Alignment.LEFT;
-                alignment_clutter = Clutter.ActorAlign.START;
-                break;
-            case "right":
-                alignment_pango = Pango.Alignment.RIGHT;
-                alignment_clutter = Clutter.ActorAlign.END;
-                break;
-            default:
-                alignment_pango = Pango.Alignment.CENTER;
-                alignment_clutter = Clutter.ActorAlign.CENTER;
-                break;
-        }
-
-        this._usageLabel.get_clutter_text().set_line_alignment(alignment_pango);
-        this._temperatureLabel.get_clutter_text().set_line_alignment(alignment_pango);
-
-        this._usageLabel.get_clutter_text().set_x_align(alignment_clutter);
-        this._temperatureLabel.get_clutter_text().set_x_align(alignment_clutter);
-    }
-
-
-    _updateIconVisibility() {
-        this._icon.visible = this._showIcon;
+        this._startTimer(UPDATE_INTERVAL);
     }
 
 
@@ -297,14 +243,13 @@ class CpuApplet extends Applet.Applet {
             tooltipLines.length === 0 ?
                 "CPU information unavailable" : tooltipLines.join("\n")
         );
-        if (this._showIcon)
-            this._icon.queue_repaint();
+        this._queueIconRepaint();
 
         this._applyAlignment();
     }
 
 
-    _drawCpu(area) {
+    draw(area) {
         let cr = area.get_context();
         let width = area.width;
         let height = area.height;
@@ -339,26 +284,6 @@ class CpuApplet extends Applet.Applet {
         cr.fill();
 
         cr.$dispose();
-    }
-
-
-    _startTimer() {
-        this._updateTimer = GLib.timeout_add_seconds(
-            GLib.PRIORITY_DEFAULT,
-            UPDATE_INTERVAL,
-            () => {
-                this._update();
-                return GLib.SOURCE_CONTINUE;
-            }
-        );
-    }
-
-
-    on_applet_removed_from_panel() {
-        if (this._updateTimer !== null) {
-            GLib.source_remove(this._updateTimer);
-            this._updateTimer = null;
-        }
     }
 }
 

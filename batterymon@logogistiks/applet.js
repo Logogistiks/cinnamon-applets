@@ -1,11 +1,9 @@
-const Applet = imports.ui.applet;
-const Clutter = imports.gi.Clutter;
-const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
-const Pango = imports.gi.Pango;
 const Util = imports.misc.util;
 const Settings = imports.ui.settings;
+
+const Base = imports.applets["batterymon@logogistiks"].shared.appletBase;
 
 const UPOWER_BUS = "org.freedesktop.UPower";
 const UPOWER_PATH = "/org/freedesktop/UPower";
@@ -27,53 +25,25 @@ const STATE_PENDING_DISCHARGE = 6;
 const UPDATE_INTERVAL = 30;
 
 
-class BatteryApplet extends Applet.Applet {
+class BatteryApplet extends Base.IconTwoLineApplet {
     constructor(metadata, orientation, panelHeight, instanceId) {
-        super(orientation, panelHeight, instanceId);
+        super(metadata, orientation, panelHeight, instanceId, {
+            widthFactor: 0.48,
+            minWidth: 14,
+            minHeight: 18,
+            heightPadding: 8
+        });
+
+        this._textBox.set_style("padding-left: 3px;");
+        this._topLabel.set_text("??%");
+        this._botLabel.set_text("");
 
         this._devices = [];
         this._deviceSignals = [];
-        this._updateTimer = null;
         this._batteryPaths = [];
         this._batteryData = null;
-
-        this._box = new St.BoxLayout({
-            vertical: false,
-            style_class: "my-battery-box"
-        });
-
-        // Vertical battery icon first
-        this._icon = new St.DrawingArea({
-            width: Math.max(14, Math.floor(panelHeight * 0.48)),
-            height: Math.max(18, panelHeight - 8)
-        });
-
-        this._icon.connect(
-            "repaint",
-            this._drawBattery.bind(this)
-        );
-
-        // Text goes to the right of the icon
-        this._textBox = new St.BoxLayout({
-            vertical: true,
-            style: "padding-left: 3px;"
-        });
-
-        this._label = new St.Label({
-            text: "??%"
-        });
-
-        this._timeLabel = new St.Label({
-            text: ""
-        });
-
-        this._textBox.add_child(this._label);
-        this._textBox.add_child(this._timeLabel);
-
-        this._box.add_child(this._icon);
-        this._box.add_child(this._textBox);
-
-        this.actor.add_child(this._box);
+        this._label = this._topLabel;
+        this._timeLabel = this._botLabel;
 
         this._settings = new Settings.AppletSettings(
             this,
@@ -103,33 +73,7 @@ class BatteryApplet extends Applet.Applet {
 
         this._connectUPower();
         this._update();
-        this._startTimer();
-    }
-
-
-    _applyAlignment() {
-        let alignment_pango, alignment_clutter;
-
-        switch (this._labelAlignment) {
-            case "left":
-                alignment_pango = Pango.Alignment.LEFT;
-                alignment_clutter = Clutter.ActorAlign.START;
-                break;
-            case "right":
-                alignment_pango = Pango.Alignment.RIGHT;
-                alignment_clutter = Clutter.ActorAlign.END;
-                break;
-            default:
-                alignment_pango = Pango.Alignment.CENTER;
-                alignment_clutter = Clutter.ActorAlign.CENTER;
-                break;
-        }
-
-        this._label.get_clutter_text().set_line_alignment(alignment_pango);
-        this._timeLabel.get_clutter_text().set_line_alignment(alignment_pango);
-
-        this._label.get_clutter_text().set_x_align(alignment_clutter);
-        this._timeLabel.get_clutter_text().set_x_align(alignment_clutter);
+        this._startTimer(UPDATE_INTERVAL);
     }
 
 
@@ -158,9 +102,6 @@ class BatteryApplet extends Applet.Applet {
 
     /*
      * Ask UPower for all device object paths and keep only batteries.
-     *
-     * We deliberately do not assume BAT0/BAT1. This also works if the
-     * machine has differently named batteries.
      */
     _enumerateDevices() {
         try {
@@ -334,9 +275,6 @@ class BatteryApplet extends Applet.Applet {
     }
 
 
-    /*
-     * Update text, tooltip and icon.
-     */
     _update() {
         let data = this._getBatteryData();
 
@@ -359,15 +297,9 @@ class BatteryApplet extends Applet.Applet {
 
         this.set_applet_tooltip(tooltip);
 
-        if (this._showIcon)
-            this._icon.queue_repaint();
+        this._queueIconRepaint();
 
         this._applyAlignment();
-    }
-
-
-    _updateIconVisibility() {
-        this._icon.visible = this._showIcon;
     }
 
 
@@ -381,7 +313,7 @@ class BatteryApplet extends Applet.Applet {
     }
 
     /*
-     * Construct the tooltip.
+     * Construct the tooltip text.
      */
     _buildTooltip(data) {
         let lines = [];
@@ -413,9 +345,7 @@ class BatteryApplet extends Applet.Applet {
         return lines.join("\n");
     }
 
-    /*
-     * Extract the human-readable BAT0/BAT1 name from the UPower path.
-     */
+
     _getBatteryName(path) {
         let parts = path.split("/");
 
@@ -510,12 +440,7 @@ class BatteryApplet extends Applet.Applet {
     }
 
 
-    /*
-     * Draw the battery icon using Cairo.
-     *
-     * The fill corresponds to the combined energy percentage.
-     */
-    _drawBattery(area) {
+    draw(area) {
         let cr = area.get_context();
 
         let width = area.width;
@@ -603,30 +528,8 @@ class BatteryApplet extends Applet.Applet {
         cr.$dispose();
     }
 
-    /*
-     * Periodic fallback update.
-     */
-    _startTimer() {
-        this._updateTimer = GLib.timeout_add_seconds(
-            GLib.PRIORITY_DEFAULT,
-            UPDATE_INTERVAL,
-            () => {
-                this._update();
-                return GLib.SOURCE_CONTINUE;
-            }
-        );
-    }
 
-
-    /*
-     * Cinnamon calls this when the applet is removed.
-     */
     on_applet_removed_from_panel() {
-        if (this._updateTimer !== null) {
-            GLib.source_remove(this._updateTimer);
-            this._updateTimer = null;
-        }
-
         for (let signal of this._deviceSignals) {
             try {
                 signal.proxy.disconnect(signal.id);
@@ -637,6 +540,8 @@ class BatteryApplet extends Applet.Applet {
 
         this._deviceSignals = [];
         this._devices = [];
+
+        super.on_applet_removed_from_panel();
     }
 
 

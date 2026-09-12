@@ -8,5 +8,6 @@ mkdir -p "$APPLET_DIR"
 for dir in "$SCRIPT_DIR"/*@logogistiks; do
     if [[ -d "$dir" && -f "$dir/metadata.json" ]]; then
         ln -sfn "$dir" "$APPLET_DIR/$(basename "$dir")"
+        ln -sfn ../shared "$dir/shared"
     fi
 done

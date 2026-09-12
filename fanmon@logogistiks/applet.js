@@ -1,55 +1,31 @@
-const Applet = imports.ui.applet;
-const Clutter = imports.gi.Clutter;
-const St = imports.gi.St;
-const Pango = imports.gi.Pango;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const ByteArray = imports.byteArray;
-const Util = imports.misc.util;
 const Settings = imports.ui.settings;
+
+const Base = imports.applets["fanmon@logogistiks"].shared.appletBase;
 
 const HWMON_PATH = "/sys/class/hwmon";
 const UPDATE_INTERVAL = 5;
 
 
-class FanApplet extends Applet.Applet {
+class FanApplet extends Base.IconTwoLineApplet {
     constructor(metadata, orientation, panelHeight, instanceId) {
-        super(orientation, panelHeight, instanceId);
+        super(metadata, orientation, panelHeight, instanceId, {
+            widthFactor: 0.58,
+            minWidth: 18,
+            minHeight: 20,
+            heightPadding: 6
+        });
 
-        this._updateTimer = null;
+        this._textBox.set_style("padding-left: 0px;");
+        this._topLabel.set_text("??");
+        this._botLabel.set_text("RPM");
+
         this._fanPath = this._findFanPath();
         this._rpm = null;
-
-        this._box = new St.BoxLayout({
-            vertical: false,
-            style_class: "my-fan-box"
-        });
-
-        this._icon = new St.DrawingArea({
-            width: Math.max(18, Math.floor(panelHeight * 0.58)),
-            height: Math.max(20, panelHeight - 6)
-        });
-        this._icon.connect("repaint", this._drawFan.bind(this));
-
-        this._textBox = new St.BoxLayout({
-            vertical: true,
-            style: "padding-left: 0px;"
-        });
-
-        this._speedLabel = new St.Label({
-            text: "??"
-        });
-
-        this._unitLabel = new St.Label({
-            text: "RPM"
-        });
-
-        this._textBox.add_child(this._speedLabel);
-        this._textBox.add_child(this._unitLabel);
-
-        this._box.add_child(this._icon);
-        this._box.add_child(this._textBox);
-        this.actor.add_child(this._box);
+        this._speedLabel = this._topLabel;
+        this._unitLabel = this._botLabel;
 
         this._settings = new Settings.AppletSettings(
             this,
@@ -72,38 +48,7 @@ class FanApplet extends Applet.Applet {
         );
 
         this._update();
-        this._startTimer();
-    }
-
-
-    _applyAlignment() {
-        let alignment_pango, alignment_clutter;
-
-        switch (this._labelAlignment) {
-            case "left":
-                alignment_pango = Pango.Alignment.LEFT;
-                alignment_clutter = Clutter.ActorAlign.START;
-                break;
-            case "right":
-                alignment_pango = Pango.Alignment.RIGHT;
-                alignment_clutter = Clutter.ActorAlign.END;
-                break;
-            default:
-                alignment_pango = Pango.Alignment.CENTER;
-                alignment_clutter = Clutter.ActorAlign.CENTER;
-                break;
-        }
-
-        this._speedLabel.get_clutter_text().set_line_alignment(alignment_pango);
-        this._unitLabel.get_clutter_text().set_line_alignment(alignment_pango);
-
-        this._speedLabel.get_clutter_text().set_x_align(alignment_clutter);
-        this._unitLabel.get_clutter_text().set_x_align(alignment_clutter);
-    }
-
-
-    _updateIconVisibility() {
-        this._icon.visible = this._showIcon;
+        this._startTimer(UPDATE_INTERVAL);
     }
 
 
@@ -171,14 +116,13 @@ class FanApplet extends Applet.Applet {
         this.set_applet_tooltip(
             this._fanPath === null ? "Fan path unavailable" : this._fanPath
         );
-        if (this._showIcon)
-            this._icon.queue_repaint();
+        this._queueIconRepaint();
 
         this._applyAlignment();
     }
 
 
-    _drawFan(area) {
+    draw(area) {
         let cr = area.get_context();
         let width = area.width;
         let height = area.height;
@@ -223,26 +167,6 @@ class FanApplet extends Applet.Applet {
         cr.fill();
 
         cr.$dispose();
-    }
-
-
-    _startTimer() {
-        this._updateTimer = GLib.timeout_add_seconds(
-            GLib.PRIORITY_DEFAULT,
-            UPDATE_INTERVAL,
-            () => {
-                this._update();
-                return GLib.SOURCE_CONTINUE;
-            }
-        );
-    }
-
-
-    on_applet_removed_from_panel() {
-        if (this._updateTimer !== null) {
-            GLib.source_remove(this._updateTimer);
-            this._updateTimer = null;
-        }
     }
 }
 

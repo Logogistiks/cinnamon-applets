@@ -3,7 +3,7 @@
     "name": "Logo's CPU Monitor",
     "description": "A small CPU usage and temperature monitor",
     "icon": "cpu-symbolic",
-    "version": "1.0",
+    "version": "1.1",
     "author": "Logogistiks",
     "max-instances": "1"
 }

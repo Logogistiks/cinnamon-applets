@@ -5,7 +5,7 @@ APPLET_DIR="$HOME/.local/share/cinnamon/applets"
 
 for dir in "$SCRIPT_DIR"/*@logogistiks; do
     if [[ -d "$dir" && -f "$dir/metadata.json" ]]; then
-        rm -f "$APPLET_DIR/$(basename "$dir")"
-        rm -f "$dir/shared"
+        rm -rf "$APPLET_DIR/$(basename "$dir")"
+        rm -rf "$dir/shared"
     fi
 done

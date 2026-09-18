@@ -1,0 +1,9 @@
+{
+    "uuid": "sessionmenu@logogistiks",
+    "name": "Logo's Session Menu",
+    "description": "A panel menu for locking, logging out, restarting, and shutting down",
+    "icon": "system-shutdown",
+    "version": "1.1",
+    "author": "Logogistiks",
+    "max-instances": "1"
+}

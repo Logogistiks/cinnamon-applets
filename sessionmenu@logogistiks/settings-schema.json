@@ -1,0 +1,99 @@
+{
+    "section-panel": {
+        "type": "section",
+        "description": "Panel"
+    },
+    "panel-icon": {
+        "type": "iconfilechooser",
+        "default": "system-shutdown",
+        "description": "Panel icon",
+        "tooltip": "Choose the icon shown in the panel"
+    },
+    "section-menu": {
+        "type": "section",
+        "description": "Menu"
+    },
+    "label-position": {
+        "type": "combobox",
+        "default": "above",
+        "description": "Label position",
+        "options": {
+            "Above icons": "above",
+            "Below icons": "below"
+        }
+    },
+    "icon-size": {
+        "type": "spinbutton",
+        "default": 36,
+        "min": 16,
+        "max": 64,
+        "step": 1,
+        "description": "Icon size",
+        "tooltip": "Set the size of action icons"
+    },
+    "horizontal-space": {
+        "type": "spinbutton",
+        "default": 22,
+        "min": 0,
+        "max": 40,
+        "step": 1,
+        "description": "Horizontal space around icons",
+        "tooltip": "Set the space on each side of action icons"
+    },
+    "section-actions": {
+        "type": "section",
+        "description": "Menu Actions"
+    },
+    "actions": {
+        "type": "list",
+        "description": "Menu actions",
+        "default": [
+            {
+                "icon": "system-lock-screen",
+                "name": "Lock",
+                "command": "cinnamon-screensaver-command --lock"
+            },
+            {
+                "icon": "system-log-out",
+                "name": "Log out",
+                "command": "cinnamon-session-quit --logout"
+            },
+            {
+                "icon": "system-reboot",
+                "name": "Restart",
+                "command": "cinnamon-session-quit --reboot"
+            },
+            {
+                "icon": "system-shutdown",
+                "name": "Shut down",
+                "command": "cinnamon-session-quit --power-off"
+            }
+        ],
+        "columns": [
+            {
+                "id": "icon",
+                "title": "Icon",
+                "type": "icon",
+                "expand-width": true
+            },
+            {
+                "id": "name",
+                "title": "Name",
+                "type": "string",
+                "expand-width": true
+            },
+            {
+                "id": "command",
+                "title": "Shell command",
+                "type": "string",
+                "expand-width": true
+            }
+        ],
+        "show-buttons": true
+    },
+    "restore-actions": {
+        "type": "button",
+        "description": "Restore default actions",
+        "callback": "restoreActions"
+    }
+}

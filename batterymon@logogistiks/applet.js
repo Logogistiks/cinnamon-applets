@@ -371,10 +371,19 @@ class BatteryApplet extends Base.IconTwoLineApplet {
      *   remaining time = energy / discharge power
      */
     _getRuntimeText(data) {
-        if (data.hasDischarging && data.dischargeRate > 0) {
-            let hours = data.energy / data.dischargeRate;
+        if (data.hasDischarging) {
+            /*
+             * Charging batteries reduce the combined battery drain.
+             * This matters if multiple batteries report different states.
+             */
+            let netDischargeRate =
+                data.dischargeRate - data.chargeRate;
 
-            return "Remaining: " + this._formatDuration(hours);
+            if (netDischargeRate > 0) {
+                let hours = data.energy / netDischargeRate;
+
+                return "Remaining: " + this._formatDuration(hours);
+            }
         }
 
         /*
@@ -409,8 +418,15 @@ class BatteryApplet extends Base.IconTwoLineApplet {
 
         let seconds = Math.round(hours * 60 * 60);
         let dateTime = GLib.DateTime.new_from_unix_utc(seconds);
+        let totalHours = Math.floor(seconds / 3600);
+        let minutes = Math.floor(seconds / 60) % 60;
+        let format = this._remainingFormat
+            .replace(/%-H/g, totalHours.toString())
+            .replace(/%H/g, totalHours.toString().padStart(2, "0"))
+            .replace(/%-M/g, minutes.toString())
+            .replace(/%M/g, minutes.toString().padStart(2, "0"));
 
-        return dateTime.format(this._remainingFormat);
+        return dateTime.format(format);
     }
 
 
